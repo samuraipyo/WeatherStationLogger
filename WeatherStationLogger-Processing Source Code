@@ -56,6 +56,8 @@ void serialEvent (Serial port)
 
 //Éste sería el equivalente a void loop() de arduino,
 //se ejecuta como un loop constante
+
+
 void draw()
 {
   
@@ -64,15 +66,10 @@ void draw()
   int d = day();
   int mes = month();
   int y = year();
-  //definimos el color del fondo negro 0,0,0 es el color negro en RGB
-  background (fondo);
-  //Si la temperatura es inferior a 30 º C
- 
+
     textSize(75);
     fill(255,0,0);
-  //Por último colocamos los valores de 
-  //temperatura en ºC y ºF, el color será el que traigamos
-  //de arriba, es decir en Rojo si es mayor de 30ºC y en Verde si es menor.
+
    text(tempC,130,190);
    text(humedad,495,190);
    text(presion,80,400);
