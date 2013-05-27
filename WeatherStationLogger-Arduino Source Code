@@ -1,0 +1,268 @@
+//Wheather Station Logger, desarrollado por Hisaoka Inc., mayo 2013
+//fuentes y creditos a publicaciones OpenSource de internet.
+
+// DS1302:  CE pin    -> Arduino Digital 2
+//          I/O pin   -> Arduino Digital 3
+//          SCLK pin  -> Arduino Digital 4
+#include <dht11.h>
+#include <SD.h>
+#include <OneWire.h>
+#include <glcd.h>
+#include <DS1302.h>
+#include <fonts/allFonts.h>
+#include "bitmaps/allBitmaps.h" 
+#include <Adafruit_MPL115A2.h>
+#include <Wire.h>
+Adafruit_MPL115A2 mpl115a2;// presion atmosferica
+
+
+
+
+int a ;// a contador de la escritura en el sd card.
+
+
+
+
+/*************************************************/
+// init el DS1302
+// DS1302 pines (CE, DATA, CLK)
+DS1302 rtc (5, 6, 7);
+
+/***********************************************/
+dht11 DHT11;
+#define DHT11PIN A0//DHT11pin
+
+/********************************************/
+//lcd pins
+
+
+/******************************************/
+//chipe select sd card
+const int chipSelect = 53;
+File dataFile;
+
+/*******************************************************************************/
+// void para ajustar hora y fecha
+void set_time() {
+rtc.setTime(7, 24, 0); // Set the time to 12:00:00 (24hr format)
+rtc.setDate(18, 5, 2013); // Set the date to August 6th, 2010
+}
+
+/*******************************************************************************/
+void setup()
+{
+   // Setup Serial connection
+  Serial.begin(9600);
+  GLCD.Init();
+  
+  Wire.begin();//iniciamos el wire
+
+   
+    rtc.halt(false);// ajustamos el reloj en modo de inicio y desabilitamos la protecion de escritura.
+    rtc.writeProtect(false);
+    
+
+   
+
+  
+  mpl115a2.begin();
+  
+  /*****************************************************************/
+  
+  /******************INtro del software*****************************/
+   GLCD.DrawBitmap(intro3,0,0);
+    delay(2000);
+    GLCD.ClearScreen();
+  /**************************************************************/
+  //deficiones del SDcard
+  Serial.print("Initializing SD card...");
+  GLCD.SelectFont(System5x7);
+  GLCD.GotoXY(14,14);
+  GLCD.print("Iniciando SD card");
+  
+GLCD.DrawRect(44,28,43,13);
+delay(500);
+GLCD.InvertRect(46,30,10,9);
+delay(500);
+GLCD.InvertRect(57,30,10,9);
+delay(500);
+GLCD.InvertRect(68,30,10,9);
+delay(500);
+GLCD.InvertRect(79,30,6,9);
+delay(500);
+GLCD.ClearScreen();
+
+  // make sure that the default chip select pin is set to
+  // output, even if you don't use it:
+  pinMode(SS, OUTPUT);
+  
+  // see if the card is present and can be initialized:
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Card failed, or not present");
+    GLCD.SelectFont(System5x7);
+    GLCD.CursorTo(0,1);
+    GLCD.print("SD card, no encontrado");
+   
+    delay(2000);
+    // don't do anything more:
+    while (1) ;
+  }
+  Serial.println("card initialized.");
+  GLCD.SelectFont(System5x7);
+  GLCD.GotoXY(14,14);
+  GLCD.print("SD card iniciado.");
+  delay(2000);
+  // Open up the file we're going to log to!
+  dataFile = SD.open("test.txt", FILE_WRITE);
+ if (! dataFile) {
+    Serial.println("error opening datalog.txt");
+    // Wait forever since we cant write data
+    while (1) ;
+  }
+/*********************************************************************/
+
+}
+  
+  void loop(){
+
+    
+  
+/**************************************************************/
+//DHT11 voidloop 
+
+  int chk = DHT11.read(DHT11PIN);
+  
+
+/***************************************************************/
+// lectura de luz solar por medio del ldr.
+
+int luzsolar = analogRead(A1);
+
+/***************************************************************/
+//presion atmosferica.
+
+  float pressureKPA = 0, temperatureC = 0;    
+   pressureKPA = mpl115a2.getPressure();  
+   
+  /******************************************************/
+  //GLCD print
+  GLCD.ClearScreen();
+  GLCD.DrawRect(0,0,127,63);
+  GLCD.SelectFont(Arial14);
+  GLCD.GotoXY(3,12);
+  GLCD.print("Temperatura: "); 
+  GLCD.GotoXY(83,2);
+  GLCD.SelectFont(fixednums15x31);
+  GLCD.print(DHT11.temperature);
+  GLCD.GotoXY(117,1);
+  GLCD.SelectFont(System5x7);
+  GLCD.print("o");
+
+  
+  GLCD.SelectFont(Arial14);
+  GLCD.GotoXY(13,40);
+  GLCD.print("Humedad:"); 
+  GLCD.GotoXY(83,31);
+  GLCD.SelectFont(fixednums15x31);
+  GLCD.print(DHT11.humidity);
+  GLCD.SelectFont(System5x7);
+  GLCD.GotoXY(117,35);
+  GLCD.print("%");
+  delay(2000);
+  
+  GLCD.ClearScreen();
+  GLCD.DrawRect(0,0,127,63);
+  GLCD.SelectFont(Arial14);
+  GLCD.GotoXY(7,3);
+  GLCD.print("Presion Atmosferica"); 
+  GLCD.GotoXY(10,30);
+  GLCD.SelectFont(fixednums15x31);
+  GLCD.print(pressureKPA,0);
+  GLCD.SelectFont(Arial14);
+  GLCD.GotoXY(95,30);
+  GLCD.print("hPa");
+  delay(2000);
+  
+   GLCD.ClearScreen();
+  GLCD.DrawRect(0,0,127,63);
+  GLCD.SelectFont(Arial14);
+  GLCD.GotoXY(38,3);
+  GLCD.print("Luz  Solar"); 
+  GLCD.GotoXY(40,30);
+  GLCD.SelectFont(fixednums15x31);
+  GLCD.print(luzsolar);
+  
+  delay(2000);
+  
+  
+  GLCD.ClearScreen();
+  GLCD.DrawRect(0,0,127,63);
+  GLCD.GotoXY(0,7);
+  GLCD.SelectFont(fixednums15x31);
+  GLCD.print(rtc.getTimeStr());
+  GLCD.GotoXY(37,41);
+  GLCD.SelectFont(Arial_bold_14);
+  GLCD.print(rtc.getDateStr());
+  delay(2000);
+
+ 
+  /***************************************/
+  //almacenamiento en la tarjeta de memoria
+  a = a + 1;
+  if(a == 30){
+  GLCD.ClearArea();
+  GLCD.GotoXY(7,5);
+  GLCD.SelectFont(System5x7);
+  GLCD.print("Guardando en el SD..");
+  GLCD.DrawRect(44,28,43,13);
+  delay(250);
+  GLCD.InvertRect(46,30,10,9);
+  delay(250);
+  GLCD.InvertRect(57,30,10,9);
+  delay(250);
+  GLCD.InvertRect(68,30,10,9);
+  delay(250);
+  GLCD.InvertRect(79,30,6,9);
+  delay(250);
+  GLCD.ClearScreen();
+
+
+  
+  dataFile.print(rtc.getDateStr());
+  dataFile.print(",");
+  dataFile.print(rtc.getTimeStr());
+  dataFile.print(",");
+  dataFile.print(pressureKPA,1);
+  dataFile.print(",");
+  dataFile.print(DHT11.humidity);
+  dataFile.print(",");
+  dataFile.print(DHT11.temperature);
+  dataFile.print(",");
+  dataFile.println(luzsolar);
+
+
+  dataFile.flush();
+  a = 0;  
+  }
+ /*****************************************/
+ //serial print del string hacia processing
+ 
+  Serial.print(rtc.getDateStr());
+  Serial.print(",");
+  Serial.print(rtc.getTimeStr());
+  Serial.print(",");
+  Serial.print(pressureKPA,1);
+  Serial.print(",");
+  Serial.print(DHT11.humidity);
+  Serial.print(",");
+  Serial.print(DHT11.temperature);
+  Serial.print(",");
+  Serial.print(luzsolar);
+  Serial.print(".");
+/***********************************************/  
+  
+  
+  delay(1000); 
+  }
+
+/**********************************************************************************/
