@@ -1,0 +1,87 @@
+//Desarrolado por Hisaoka Inc.
+//Mayo 2013
+//Gracias a las publicaciones open source de internet.
+
+
+//Importamos la librería para el uso del puerto serie, 
+//en arduino se carga sola, aquí hay que llamarla.
+import processing.serial.*; 
+//Definimos todas las variables
+Serial port;
+String tempC="";
+String tempF="";
+String humedad="";
+String presion="";
+String luz="";
+String Data="";
+PFont font;
+int index=0;
+PImage fondo;
+//Este void setup() es similar al de arduino solo se ejecuta al inicio
+void setup() 
+{
+  //Aquí definimos el tamaño de la ventana que 
+  //mostraremos por pantalla
+  size(1024,768);
+  fondo = loadImage ("fondonubes.jpg");
+  //Inicializamos el puerto serie y decimos 
+  //que se haga lectura hasta encontrar el punto
+  port = new Serial(this, "COM11", 9600);
+  port.bufferUntil('.');
+  //Esto es para cargar la fuente por defecto que usaremos en el programa, 
+  //la fuente tendrá que estar en la carpeta data del proyecto
+  font = loadFont("Verdana-12.vlw");
+  textFont(font);}
+//Este evento se llama cuando hay entrada en el puerto serie
+void serialEvent (Serial port)
+{
+  //Leemos hasta que se encuentre un punto y guardamos lo leido en Data
+  Data = port.readStringUntil('.');
+  //Este comando nos sirve para eliminar 
+  //el punto del final ya que si no nos lo mostraría por pantalla   
+  Data = Data.substring(0,Data.length()-1);
+  //buscamos la posición de la coma que separa 
+  //los dos valores y guardamos la posición en index
+  index = Data.indexOf(",");
+  //almacenamos la primera parte del texto en tempC
+  tempC= Data.substring(0,index);
+  //Almacenamos la segunda parte en tempF
+  
+  humedad = Data.substring(3,index+3);
+  
+  presion = Data.substring(6,index+8);
+  
+  luz = Data.substring(index+9,Data.length());
+}
+
+//Éste sería el equivalente a void loop() de arduino,
+//se ejecuta como un loop constante
+void draw()
+{
+  
+  int h = hour();
+  int m = minute();
+  int d = day();
+  int mes = month();
+  int y = year();
+  //definimos el color del fondo negro 0,0,0 es el color negro en RGB
+  background (fondo);
+  //Si la temperatura es inferior a 30 º C
+ 
+    textSize(75);
+    fill(255,0,0);
+  //Por último colocamos los valores de 
+  //temperatura en ºC y ºF, el color será el que traigamos
+  //de arriba, es decir en Rojo si es mayor de 30ºC y en Verde si es menor.
+   text(tempC,130,190);
+   text(humedad,495,190);
+   text(presion,80,400);
+   text(luz,480,400);
+
+
+   textSize(50);
+   text(h+":"+m,130,600);
+  
+   textSize(45);
+   text(d+"."+mes+"."+y,444,600);
+}
